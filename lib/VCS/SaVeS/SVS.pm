@@ -24,9 +24,12 @@ sub add {
     my ($self, $switches, $files) = @_;
     assert_repository();
     validate_files($files);
-    write_manifest([read_manifest(), $files]);
+    my $file_list = files_not_in_manifest($files);
+    write_manifest([read_manifest(), $file_list]);
     initialize_repository();
-    # printf STDOUT "%d files added\n", $count;
+    my $count = update_repository($file_list, 
+                                  get_message($switches));
+    printf STDOUT "%d files added to MANIFEST\n", $count;
 }
 
 sub break {
@@ -83,18 +86,21 @@ sub import_ {
     make_repository();
     write_manifest($files);
     initialize_repository();
-    my $file_list = read_manifest();
-    my $msg = $switches->{m} || prompt_message() || 'none';
-    my $count = update_repository($file_list, $msg);
+    my $count = update_repository(read_manifest(), 
+                                  get_message($switches));
     printf STDOUT "%d files imported\n", $count;
 }
 
 sub manifest {
     my ($self, $switches, $files) = @_;
     assert_repository();
-    @$files
-      ? write_manifest($files)
-      : display_manifest();
+    if (@$files) {
+        write_manifest($files);
+        print("MANIFEST updated\n");
+    }
+    else {
+        display_manifest();
+    }
 }
 
 sub remove {
@@ -102,9 +108,10 @@ sub remove {
     assert_repository();
     validate_files($files);
     my %manifest = map {($_, 1)} @{read_manifest()};
-    delete $manifest{$_}
-      for @{find_all_files_in_list($files)};
+    my $file_list = files_in_manifest($files);
+    delete $manifest{$_} for @$file_list;
     write_manifest([keys %manifest]);
+    printf STDOUT "%d files removed from MANIFEST\n", 0+@$file_list;
 }
 
 sub restore {
@@ -112,10 +119,16 @@ sub restore {
     assert_repository();
     assert_file_in_repository($files);
     my $file = $files->[0];
-    my $number = $switches->{n} || 1;
-    die "Revision number must be positive\n"
-      if $number < 1;
-    restore_by_number($file, $number);
+    my $revision = $switches->{r} || 1;
+    if ($revision =~ /^\d+\./) {
+        restore_by_revision($file, $revision);
+    }
+    elsif ($revision =~ /^\d+$/ and $revision > 0) {
+        restore_by_number($file, $revision);
+    }
+    else{
+        die "-n must be positive integer or revision number\n";
+    }
 }
 
 sub save {
@@ -123,9 +136,8 @@ sub save {
     assert_repository();
     push @$files, '.' unless @$files;
     validate_files($files);
-    my $file_list = find_files_in_manifest($files);
-    my $msg = $switches->{m} || prompt_message() || 'none';
-    my $count = update_repository($file_list, $msg);
+    my $count = update_repository(files_in_manifest($files),
+                                  get_message($switches));
     printf STDOUT "%d files saved\n", $count;
 }
 
@@ -134,7 +146,7 @@ sub status {
     assert_repository();
     push @$files, '.' unless @$files;
     validate_files($files);
-    show_status(find_files_in_manifest($files));
+    show_status(files_in_manifest($files));
 }
 
 sub version {
@@ -148,7 +160,14 @@ VERSION
 ###############################################################################
 # support routines
 ###############################################################################
-sub prompt_message {
+sub get_message {
+    my ($switches) = @_;
+    my $default = 'No worries mate';
+    return $default if defined $switches->{M};
+
+    if (defined $switches->{m}) {
+        return $switches->{m} || $default;
+    }
     $| = 1;
     my $msg = '';
     print "Enter a message, terminated with single '.' or end of file:\n";
@@ -162,7 +181,7 @@ sub prompt_message {
     unless ($msg =~ /\n./s) {
         chomp $msg;
     }
-    return $msg;
+    return $msg || $default;
 }
 
 sub make_repository {
@@ -300,11 +319,20 @@ sub find_files {
     die "Don't know how to handle $file\n";
 }
 
-sub find_files_in_manifest {
-    my $manifest_files = read_manifest();
-    my %manifest = map {($_, 1)} @$manifest_files;
-    my $all_files = find_all_files_in_list($_[0]);
-    [(grep {$manifest{$_}} @$all_files)]
+sub files_in_manifest {
+    my ($files) = @_;
+    my %manifest = map {($_, 1)} @{read_manifest()};
+    return [ grep {$manifest{$_}} 
+             @{find_all_files_in_list($files)}
+           ];
+}
+
+sub files_not_in_manifest {
+    my ($files) = @_;
+    my %manifest = map {($_, 1)} @{read_manifest()};
+    return [ grep {not $manifest{$_}} 
+             @{find_all_files_in_list($files)} 
+           ];
 }
 
 sub show_status {
@@ -322,9 +350,14 @@ sub show_status {
     my @sections = split /^=+$/m, $statustext;
     pop @sections;
     for my $section (@sections) {
-        $section =~ /^RCS file: (.*?)\n.*?^head: (.*?)\n.*?date: (.*?);/sm
-          or die "Can't grok rlog output:\n$section\n";
-        my ($version, $date, $file) = ($2, $3, $1);
+        $section =~ 
+          /^RCS file: (.*?)\n.*?^locks:.*?:\s+(.*?)\n/sm
+            or die "Can't grok rlog output:\n$section\n";
+        my ($version, $file) = ($2, $1);
+        $section =~ 
+          /^revision\s+\Q$version\E.*?\n.*?date:\s+(.*?);/sm
+            or die "Can't grok rlog output:\n$section\n";
+        my $date = $1;
         $file =~ s{^\.saves/SAVES/(.*),v$}{$1};
         my $modified = ((-M $file) < (-M ".saves/SAVES/$file,v"))
                        ? '*'
@@ -369,6 +402,7 @@ sub parse_rlog {
         /^revision\s+(\S+).*?
          ^date:\s+(.+?);.*?
          (?:lines:\s+(.+?))?\n
+         (?:branches:.*?\n)?
          (.*)
         /xms or die "Couldn't parse rlog for '$file':\n$rlog";
         push @$parse,
@@ -380,6 +414,16 @@ sub parse_rlog {
           };
     }
     return $parse;
+}
+
+sub restore_by_revision {
+    my ($file, $revision) = @_;
+    my %revisions = map {($_->{revision}, 1)} @{parse_rlog($file)};
+    die "Revision number is invalid\n"
+      unless defined $revisions{$revision};
+    system(qq{rcs -q -u $file .saves/SAVES/$file,v && } .
+           qq{co -q -f -l$revision $file .saves/SAVES/$file,v}) == 0
+      or die "Couldn't restore file '$file', revision '$revision'\n";
 }
 
 sub restore_by_number {
@@ -401,7 +445,7 @@ sub show_diff {
           or die "Can't unlink .saves/tmp/diff";
     }
     my $shell_commands;
-    for my $file (@{find_files_in_manifest($files)}) {
+    for my $file (@{files_in_manifest($files)}) {
         $shell_commands .= 
           qq{rcsdiff -q -zLT -u $file .saves/SAVES/$file,v} .
           qq{ >> .saves/tmp/diff\n};

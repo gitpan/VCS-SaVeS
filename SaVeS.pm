@@ -1,5 +1,5 @@
 package VCS::SaVeS;
-$VERSION = '0.10';
+$VERSION = '0.11';
 use 5.005;
 use strict;
 

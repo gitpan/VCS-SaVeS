@@ -82,9 +82,10 @@ for (@$cmd_arguments) {
 # Parse command switches
 my $getopts = 
   {
+   add     => [qw(m=s M)],
    import_ => [qw(m=s)],
-   save => [qw(m=s)],
-   restore => [qw(n=i)],
+   restore => [qw(r=s)],
+   save    => [qw(m=s)],
   };
     
 if (defined $getopts->{$cmd}) {
@@ -212,9 +213,35 @@ Description of <cmd> goes here.
 
 =head2 add
 
-Add a list of files to the MANIFEST.
+Add a list of files to the MANIFEST. Also save an initial revision for
+every file that has never been saved.
+
+Options:
+
+=over 4 
+
+=item * -m'A message'
+
+Specify a message in the command line.
+
+=item * -M
+
+Don't prompt for a message. Use the default message.
+
+=back
+
+Examples:
+
+    # Add all files
+    svs add
+    # Same as
+    svs add ./
+    # Add the files foo.txt and everything in the lib/fun/ directory
+    svs add foo.txt lib/fun 
 
 =head2 archive
+
+XXX
 
 Create a tar archive of a repository. This can be used to transport
 the repository to another system where it can be unarchived with the
@@ -226,21 +253,34 @@ This creates an empty SaVeS repository in the current directory. Doing
 this serves to keep C<svs> commands used at higher directories from
 traversing the into this directory.
 
+NOTE: 
+The empty repository consists of a single file: C<.saves/MANIFEST>. This
+repository can be made active, simply by using the C<svs add> command.
+
 =head2 config
+
+XXX
 
 This command is used to show and set the various SaVeS
 configuration options.
 
 =head2 delete
 
+XXX
+
 Remove files from the repository. This does not actually remove the
 actual files. It merely erases the revision history.
+
+NOTE:
+SaVeS commands never delete your working files. So don't worry about that.
 
 =head2 diff
 
 Show the difference between files at different revision levels.
 
 =head2 export
+
+XXX
 
 Convert a repository into a form that can be imported into another VCS,
 like C<CVS>.
@@ -257,7 +297,9 @@ C<svs> command.
 
 =head2 history
 
-Show the revision history for individual files in the repository.
+Show the revision history for individual files in the repository. You
+usually use this command before an C<svs restore> command, in order to
+identify the revision number you wish to get.
 
 =head2 import
 
@@ -267,9 +309,23 @@ These get added to the MANIFEST, and will be the only files to be
 affected by further commands, unless the MANIFEST is modified by other
 C<svs> commands.
 
-The C<svs import> command can also take a SaVeS archive as input.
+Options:
+
+=over 4 
+
+=item * -m'A message'
+
+Specify a message in the command line.
+
+=item * -M
+
+Don't prompt for a message. Use the default message.
+
+=back
 
 =head2 log
+
+XXX
 
 Display a log of previous C<svs> commands performed on the current directory.
 
@@ -286,11 +342,15 @@ modify and reset the MANIFEST:
 
 =head2 merge
 
+XXX
+
 The inverse of C<split>. This command will take a repository from a
 subdirectoryand integrate it into the repository in the current
 directory.
 
 =head2 message
+
+XXX
 
 Change the message for a certain revision of a file.
 
@@ -299,16 +359,56 @@ Change the message for a certain revision of a file.
 Remove files from the MANIFEST. This does not delete files from the
 repository. See C<delete> for that.
 
+NOTE:
+SaVeS commands never delete your working files. So don't worry about that.
+
 =head2 restore
 
-Restore a set of files in the repository to a given revision.
+Restore a single file in the repository to a given revision.
+
+Options:
+
+=over 4 
+
+=item * -r<revision-number>
+
+If the revision number is an integer, it must correspond to the line number from an C<svs history> command.
+
+If the revision number has periods (C<1.2.7>), then it is the RCS version number, which is also available from C<svs history>.
+
+=back
+
+Examples:
+
+    # Show a list of revisions for 'foo.txt'
+    svs history foo.txt
+    # Restore the 3rd revision in the history list
+    svs restore -r3 foo.txt
+    # Restore by revision number
+    svs restore -r1.3 foo.txt
 
 =head2 save
 
 This command saves files which have been modified since the last C<svs
 save> or C<svs import> command.
 
+Options:
+
+=over 4 
+
+=item * -m'A message'
+
+Specify a message in the command line.
+
+=item * -M
+
+Don't prompt for a message. Use the default message.
+
+=back
+
 =head2 split
+
+XXX
 
 This command takes a subdirectory of the current repository and makes it
 a repository of its own.
@@ -317,7 +417,9 @@ a repository of its own.
 
 This command will print a report detailing the status of each requested
 file that is in the repository. The information displayed contains the
-name of the file, the current revision and the date of last save.
+name of the file, the current RCS revision and the date of last save. If
+the working file is newer than the last save, it's name will be prefixed
+with a C<*>.
 
     svs status [file-list]
 
@@ -326,16 +428,20 @@ Sample output:
     2002-10-14 15:12:01-07 (1.1) SaVeS.pm
     2002-10-14 15:12:01-07 (1.1) ToDo
     2002-10-14 15:12:01-07 (1.1) bin/saves.PL
-    2002-10-14 15:12:01-07 (1.1) bin/svs.PL
+    2002-10-14 15:12:01-07 (1.1)*bin/svs.PL
     2002-10-14 15:12:01-07 (1.1) lib/VCS/SaVeS/Config.pm
     2002-10-14 15:12:01-07 (1.1) lib/VCS/SaVeS/Help.pm
-    2002-10-14 15:12:01-07 (1.1) lib/VCS/SaVeS/SVS.pm
+    2002-10-14 15:12:01-07 (1.1)*lib/VCS/SaVeS/SVS.pm
 
 =head2 tag
+
+XXX
 
 Associate a symbolic name with a set of files.
 
 =head2 undo
+
+XXX
 
 Undo the last C<svs> command. This can be applied as many times as needed.
 
@@ -348,16 +454,17 @@ Undo the last C<svs> command. This can be applied as many times as needed.
 The C<saves> command is the simplest way to backup a directory tree. If
 the repository doesn't exist, C<saves> is the same as saying:
 
-    svs import -m='Imported with the "saves" command' .
+    svs import -m'saves' .
 
 If the repository already exists, then C<saves> is the same as:
 
-    svs save -m='Saved with "saves" command' .
+    svs save -m'saves' .
 
 If C<saves> is called with any options or arguments, these are passed on
 to the <svs import> or <svs save> command that is actually invoked.
 
-Whenever you feel like backing everything up, just say C<'saves'>. You don't even need to think about it.
+Whenever you feel like backing everything up, just say C<'saves'>. You
+don't even need to think about it.
 
 =head2 Restore any files that were updated since the last save.
 

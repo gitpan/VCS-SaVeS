@@ -1,6 +1,16 @@
 # Revision history for Perl extension VCS::SaVeS.
 
 ---
+version: 0.11
+date:    Thu Oct 17 19:44:51 PDT 2002
+changes:
+  - Bug fixes and refactoring
+  - Add more informative messages. Got file counts right
+  - Changed -n to -r for restore
+  - Added -r1.3 revision control to restore
+  - Enhanced help doc
+
+---
 version: 0.10
 date:    Thu Oct 17 11:46:48 PDT 2002
 changes:
