@@ -1,0 +1,7 @@
+- Help:
+    - Create superhelpful die messages.
+- restore:
+    - svs restore -d 'date' file-list
+    - svs restore -t 3h,15m file-list
+- add file-count messages to silent commands
+- Support warnings in general. And -q.

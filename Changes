@@ -1,0 +1,27 @@
+# Revision history for Perl extension VCS::SaVeS.
+
+---
+version: 0.10
+date:    Thu Oct 17 11:46:48 PDT 2002
+changes:
+  - >
+    Support the following commands:
+      * saves
+      * svs add
+      * svs break
+      * svs diff
+      * svs find
+      * svs help
+      * svs history
+      * svs import [-m]
+      * svs manifest
+      * svs remove
+      * svs restore [-n]
+      * svs save [-m]
+      * svs status
+
+---
+version: 0.01
+date:    Sat Sep 28 13:47:15 2002
+changes:
+  - original version; created by h2xs 1.22 with options -PAXn VCS::SaVeS
