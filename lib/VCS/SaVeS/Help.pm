@@ -8,11 +8,11 @@ sub general {<<END;
 
   For more detailed help, try:
     svs help usage                # svs command usage
-    svs help overview             # Overview of svs and SaVeS
-    svs help basics               # Basic svs usage
+    svs help overview             # Overview of svs and SaVeS XXX
+    svs help basics               # Basic svs usage XXX
     svs help commands             # List of all svs commands
     svs help <command-name>       # Complete description of an svs command
-    svs help switches             # Command line switches for svs
+    svs help switches             # Command line switches for svs XXX
 
 END
 }
@@ -30,7 +30,6 @@ SEE:
 USAGE
 }
 
-#XXX This should be pod grepped as well from 'svs'
 sub commands {<<END
 Use 'svs help <command-name>' for complete help on a specific command.
 
@@ -38,15 +37,15 @@ add      - Add files to the MANIFEST
 archive  - Create an archive of the repository XXX
 break    - Mark directory as a SaVeS breakpoint
 config   - Change configuration options XXX
-delete   - Delete the revision history a file from the repository XXX
+delete   - Delete the revision history a file from the repository
 diff     - Show differences between file revisions
 export   - Export a repository to another VCS (such as CVS) XXX
 find     - Find repository files based on certain criteria
 help     - Get help about the SaVeS system and svs commands
 history  - Show the revision history of a file
-import   - Create a new repository (possibly from a SaVeS archive)
+import   - Create a new repository
 log      - Show a view of the SaVeS log XXX
-manifest - List or change the contents of the MANIFEST
+manifest - List or change the contents of the .saves/MANIFEST
 merge    - Merge a nested repository into the current one XXX
 message  - Change the message of a file revision XXX
 remove   - Remove a file from the MANIFEST

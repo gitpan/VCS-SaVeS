@@ -1,5 +1,5 @@
 package VCS::SaVeS;
-$VERSION = '0.11';
+$VERSION = '0.12';
 use 5.005;
 use strict;
 
@@ -9,14 +9,18 @@ __END__
 
 =head1 NAME
 
-VCS::SaVeS - VCS::* backend module for Standalone Versioning System(tm)
+VCS::SaVeS - The Standalone Versioning System(tm)
 
 =head1 SYNOPSIS
 
-This module is simply a namespace placeholder for a VCS::* backend
-module for SaVeS(tm). Once both the VCS API and the SaVeS functionality
-have matured a bit, this module may actually be implemented to do
-something.
+SaVeS is a lightweight, single user, friendly-to-use versioning system.
+Everything is done through the C<svs> command line tool. It is currently
+in a usable state even though not all of the functionality is complete.
+
+This particular module, C<VCS::SaVeS> is simply a namespace placeholder
+for a VCS::* backend module for SaVeS(tm). Once both the VCS API and the
+SaVeS functionality have matured a bit, this module may actually be
+implemented to do something.
 
 See the following manpages for more information about SaVeS:
 

@@ -1,5 +1,16 @@
-VCS/SaVeS version 0.10
+VCS/SaVeS version 0.12
 ======================
+
+NEW FEATURES
+
+- Revision numbers go oldest to newest
+- Added -r<rev> to svs diff
+- Eliminated RCS branching (a good thing)
+- Implemented 'svs delete' command
+- Fixed many bugs
+- Updated doc
+
+INTRO
 
 SaVeS(tm) is the "Standalone Versioning System". It is a single user,
 easy to use, yet powerful Version Control System (VCS) tool. It has most

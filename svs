@@ -83,9 +83,11 @@ for (@$cmd_arguments) {
 my $getopts = 
   {
    add     => [qw(m=s M)],
-   import_ => [qw(m=s)],
+   delete  => [qw(f)],
+   diff    => [qw(r=s)],
+   import_ => [qw(m=s M)],
    restore => [qw(r=s)],
-   save    => [qw(m=s)],
+   save    => [qw(m=s M)],
   };
     
 if (defined $getopts->{$cmd}) {
@@ -199,22 +201,12 @@ Restore an older revision of files in the repository.
 
 =head1 THE svs COMMANDS
 
-=head2 <cmd>
-
-Description of <cmd> goes here.
-
-=over 4
-
-=item <cmd> options
-
-=item <cmd> arguments
-
-=back
-
 =head2 add
 
 Add a list of files to the MANIFEST. Also save an initial revision for
 every file that has never been saved.
+
+    svs add [-mmessage -M] [file-list]
 
 Options:
 
@@ -232,16 +224,12 @@ Don't prompt for a message. Use the default message.
 
 Examples:
 
-    # Add all files
-    svs add
-    # Same as
-    svs add ./
+    # Add all files in current directory
+    svs add .
     # Add the files foo.txt and everything in the lib/fun/ directory
     svs add foo.txt lib/fun 
 
-=head2 archive
-
-XXX
+=head2 archive XXX
 
 Create a tar archive of a repository. This can be used to transport
 the repository to another system where it can be unarchived with the
@@ -253,34 +241,53 @@ This creates an empty SaVeS repository in the current directory. Doing
 this serves to keep C<svs> commands used at higher directories from
 traversing the into this directory.
 
-NOTE: 
-The empty repository consists of a single file: C<.saves/MANIFEST>. This
-repository can be made active, simply by using the C<svs add> command.
+    svs break
 
-=head2 config
+I<NOTE: The empty repository consists of a single file:
+C<.saves/MANIFEST>. This repository can be made active, simply by using
+the C<svs add> command.>
 
-XXX
+=head2 config XXX
 
 This command is used to show and set the various SaVeS
 configuration options.
 
 =head2 delete
 
-XXX
-
 Remove files from the repository. This does not actually remove the
 actual files. It merely erases the revision history.
 
-NOTE:
-SaVeS commands never delete your working files. So don't worry about that.
+    svs delete [-f] file-list
+
+=over 4 
+
+=item * -f
+
+Don't confirm deletion.
+
+=back
+
+I<NOTE: SaVeS commands will never delete your working files. So don't
+worry about that.>
 
 =head2 diff
 
 Show the difference between files at different revision levels.
 
-=head2 export
+    svs diff [-r<rev1> [-r<rev2>]] file-list
 
-XXX
+=over 4 
+
+=item * -r<revision-number>
+
+The revision number is an integer which must correspond to the line
+number from an C<svs history> command.
+
+=back
+
+If you use the C<-r> flags then you may only specify one filename.
+
+=head2 export XXX
 
 Convert a repository into a form that can be imported into another VCS,
 like C<CVS>.
@@ -299,7 +306,20 @@ C<svs> command.
 
 Show the revision history for individual files in the repository. You
 usually use this command before an C<svs restore> command, in order to
-identify the revision number you wish to get.
+identify the revision number you wish to get. If the working file is
+newer than the last save, the message on the first line will be prefixed
+with a C<*>.
+
+    svs history file-name
+
+Sample Output:
+
+    1) 2002-10-25 14:41:17-07 (Origin) saves 
+    2) 2002-10-25 14:45:52-07 ( +2 -4) saves 
+    3) 2002-10-29 17:31:30-08 (+58 -35) Changed die to DIE
+    4) 2002-10-29 20:29:10-08 (+11 -5) saves 
+    5) 2002-10-29 20:59:03-08 ( +3 -2) Added asterisk before message
+    *) Working file has been modified since last save
 
 =head2 import
 
@@ -308,6 +328,8 @@ can take a list of files and directories under the current directory.
 These get added to the MANIFEST, and will be the only files to be
 affected by further commands, unless the MANIFEST is modified by other
 C<svs> commands.
+
+    svs import [-mmessage -M] [file-list]
 
 Options:
 
@@ -323,9 +345,7 @@ Don't prompt for a message. Use the default message.
 
 =back
 
-=head2 log
-
-XXX
+=head2 log XXX
 
 Display a log of previous C<svs> commands performed on the current directory.
 
@@ -340,31 +360,32 @@ modify and reset the MANIFEST:
 
     svs manifest | grep -v CVS | svs --stdin manifest
 
-=head2 merge
-
-XXX
+=head2 merge XXX
 
 The inverse of C<split>. This command will take a repository from a
 subdirectoryand integrate it into the repository in the current
 directory.
 
-=head2 message
-
-XXX
+=head2 message XXX
 
 Change the message for a certain revision of a file.
 
 =head2 remove
 
+    svs remove file-list
+
 Remove files from the MANIFEST. This does not delete files from the
 repository. See C<delete> for that.
 
-NOTE:
-SaVeS commands never delete your working files. So don't worry about that.
+I<NOTE: SaVeS commands will never delete your working files. So don't
+worry about that.>
 
 =head2 restore
 
-Restore a single file in the repository to a given revision.
+Restore a single file in the repository to a given revision. If no
+revision number is given, restore to last save.
+
+    svs restore [-r<rev>] [file-list]
 
 Options:
 
@@ -372,9 +393,8 @@ Options:
 
 =item * -r<revision-number>
 
-If the revision number is an integer, it must correspond to the line number from an C<svs history> command.
-
-If the revision number has periods (C<1.2.7>), then it is the RCS version number, which is also available from C<svs history>.
+The revision number is an integer which must correspond to the line
+number from an C<svs history> command.
 
 =back
 
@@ -382,68 +402,64 @@ Examples:
 
     # Show a list of revisions for 'foo.txt'
     svs history foo.txt
-    # Restore the 3rd revision in the history list
-    svs restore -r3 foo.txt
-    # Restore by revision number
-    svs restore -r1.3 foo.txt
+        # Restore revision number 3 in the history list
+        svs restore -r3 foo.txt
+        # Restore the last saved revision
+        svs restore foo.txt
 
-=head2 save
+    =head2 save
 
-This command saves files which have been modified since the last C<svs
-save> or C<svs import> command.
+    This command saves files which have been modified since the last C<svs
+    save> or C<svs import> command.
 
-Options:
+        svs save [-mmessage -M] [file-list]
 
-=over 4 
+    Options:
 
-=item * -m'A message'
+    =over 4 
 
-Specify a message in the command line.
+    =item * -m'A message'
 
-=item * -M
+    Specify a message in the command line.
 
-Don't prompt for a message. Use the default message.
+    =item * -M
 
-=back
+    Don't prompt for a message. Use the default message.
 
-=head2 split
+    =back
 
-XXX
+    =head2 split XXX
 
-This command takes a subdirectory of the current repository and makes it
-a repository of its own.
+    This command takes a subdirectory of the current repository and makes it
+    a repository of its own.
 
-=head2 status
+    =head2 status
 
-This command will print a report detailing the status of each requested
-file that is in the repository. The information displayed contains the
-name of the file, the current RCS revision and the date of last save. If
-the working file is newer than the last save, it's name will be prefixed
-with a C<*>.
+    This command will print a report detailing the status of each requested
+    file that is in the repository. The information displayed contains the
+    name of the file, the current number of revisions and the date of last
+    save. If the working file is newer than the last save, it's name will be
+    prefixed with a C<*>.
 
-    svs status [file-list]
+        svs status [file-list]
 
-Sample output:
+    Sample output:
 
-    2002-10-14 15:12:01-07 (1.1) SaVeS.pm
-    2002-10-14 15:12:01-07 (1.1) ToDo
-    2002-10-14 15:12:01-07 (1.1) bin/saves.PL
-    2002-10-14 15:12:01-07 (1.1)*bin/svs.PL
-    2002-10-14 15:12:01-07 (1.1) lib/VCS/SaVeS/Config.pm
-    2002-10-14 15:12:01-07 (1.1) lib/VCS/SaVeS/Help.pm
-    2002-10-14 15:12:01-07 (1.1)*lib/VCS/SaVeS/SVS.pm
+        2002-10-29 20:55:31-08 (2) SaVeS.pm
+        2002-10-25 14:50:34-07 (2)*ToDo
+        2002-10-25 14:41:17-07 (1) bin/saves.PL
+        2002-10-25 14:41:17-07 (1)*bin/svs.PL
+        2002-10-25 14:41:17-07 (1) lib/VCS/SaVeS/Config.pm
+        2002-10-25 14:41:17-07 (1)*lib/VCS/SaVeS/Help.pm
+        2002-10-29 20:59:03-08 (5)*lib/VCS/SaVeS/SVS.pm
 
-=head2 tag
+    =head2 tag XXX
 
-XXX
+    Associate a symbolic name with a set of files.
 
-Associate a symbolic name with a set of files.
+    =head2 undo XXX
 
-=head2 undo
-
-XXX
-
-Undo the last C<svs> command. This can be applied as many times as needed.
+    Undo the last C<svs> command. This can be applied as many times as needed.
 
 =head1 COMMON USAGE EXAMPLES
 
@@ -466,9 +482,9 @@ to the <svs import> or <svs save> command that is actually invoked.
 Whenever you feel like backing everything up, just say C<'saves'>. You
 don't even need to think about it.
 
-=head2 Restore any files that were updated since the last save.
+=head2 Restore a file to a certain revision.
 
-    svs restore
+    svs restore [-r<rev>] file-name
 
 Without any arguments, this command simply sets things back to the way
 they were when you last saved.
